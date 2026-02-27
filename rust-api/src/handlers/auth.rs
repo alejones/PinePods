@@ -1208,9 +1208,17 @@ pub async fn oidc_callback(
         }
         Err(e) => {
             tracing::error!("OIDC: Token exchange request failed: {}", e);
-            return Ok(create_oidc_response(&frontend_base, "error=token_exchange_failed"));
-        }
-    };
+            tracing::error!("OIDC: Error details - is_timeout: {}, is_connect: {}, is_request: {}", 
+                e.is_timeout(), 
+                e.is_connect(), 
+                e.is_request()
+            );
+            if let Some(source) = e.source() {
+                tracing::error!("OIDC: Error source: {}", source);
+            }
+        return Ok(create_oidc_response(&frontend_base, "error=token_exchange_failed"));
+    }
+};
 
     let access_token = match token_response.get("access_token").and_then(|v| v.as_str()) {
         Some(token) => token,
